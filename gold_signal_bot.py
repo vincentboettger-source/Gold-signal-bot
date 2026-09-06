@@ -60,6 +60,14 @@ def fetch_data() -> pd.DataFrame:
 def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
     close = df["Close"]
 
+    # Sicherstellen, dass "close" wirklich eine 1D-Serie ist.
+    # Manche yfinance-Versionen liefern hier ein DataFrame mit einer
+    # einzelnen Spalte statt einer Series zurück - das verwirrt die
+    # "ta"-Bibliothek ("Data must be 1-dimensional" Fehler).
+    if isinstance(close, pd.DataFrame):
+        close = close.iloc[:, 0]
+    close = pd.Series(close.values.reshape(-1), index=df.index, name="Close")
+
     df["sma_short"] = SMAIndicator(close, window=SMA_SHORT).sma_indicator()
     df["sma_long"] = SMAIndicator(close, window=SMA_LONG).sma_indicator()
     df["rsi"] = RSIIndicator(close, window=RSI_PERIOD).rsi()
