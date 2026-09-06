@@ -43,6 +43,13 @@ def fetch_data() -> pd.DataFrame:
     df = yf.download(TICKER, period=LOOKBACK, interval=INTERVAL, progress=False)
     if df.empty:
         raise RuntimeError(f"Keine Daten für {TICKER} erhalten. Ticker oder Intervall prüfen.")
+
+    # Neuere yfinance-Versionen liefern manchmal MultiIndex-Spalten
+    # (z.B. ("Close", "GC=F")) auch für einen einzelnen Ticker.
+    # Das flachen wir hier ab, damit df["Close"] eine normale 1D-Serie ist.
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.get_level_values(0)
+
     df = df.dropna()
     return df
 
